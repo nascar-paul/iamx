@@ -101,16 +101,24 @@ jQuery(function ($) {
 
     // -------------------------------------------------------------
     // Countup
+    // Reads the target from data-to, not the element's own text. The
+    // markup ships "0" as the starting value, so animating to
+    // $this.text() counted 0 -> 0 and the numbers never moved.
     // -------------------------------------------------------------
     $('.count-wrap').bind('inview', function(event, visible, visiblePartX, visiblePartY) {
         if (visible) {
             $(this).find('.timer').each(function () {
                 var $this = $(this);
-                $({ Counter: 0 }).animate({ Counter: $this.text() }, {
+                var target = parseInt($this.attr('data-to'), 10) || 0;
+                $this.text(0);
+                $({ Counter: 0 }).animate({ Counter: target }, {
                     duration: 2000,
                     easing: 'swing',
                     step: function () {
                         $this.text(Math.ceil(this.Counter));
+                    },
+                    complete: function () {
+                        $this.text(target);
                     }
                 });
             });
@@ -132,31 +140,6 @@ jQuery(function ($) {
         }
     });
     
-    // -------------------------------------------------------------
-    // Fact counters
-    // jquery.countTo.js was loaded but never initialized, so these were
-    // static text. Animate on scroll-into-view instead.
-    // -------------------------------------------------------------
-    $('.timer').each(function () {
-        var $t = $(this);
-        $t.text($t.attr('data-to'));   // no-JS / unsupported fallback: show the real number
-    });
-
-    $('#facts').bind('inview', function (event, visible) {
-        if (!visible) return;
-        $(this).unbind('inview');
-        $(this).find('.timer').each(function () {
-            var $t = $(this);
-            $t.countTo({
-                from: 0,
-                to: parseInt($t.attr('data-to'), 10) || 0,
-                duration: 2000,
-                refreshInterval: 50
-            });
-        });
-    });
-
-
     // -------------------------------------------------------------
     // More skill
     // -------------------------------------------------------------
