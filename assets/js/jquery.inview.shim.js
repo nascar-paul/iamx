@@ -11,12 +11,20 @@
  * (visible, partX, partY), matching the old event arguments, and only
  * the first time the element scrolls into view - which is what every
  * caller here wants.
+ *
+ * This uses a scroll/resize listener rather than IntersectionObserver
+ * on purpose: IO depends on a rendering-path callback that is not
+ * reliably delivered in every environment (headless browsers, some
+ * embedded webviews), and a missed first callback would leave the
+ * counters stuck at 0. There are only three watched elements, so the
+ * cost of a getBoundingClientRect per scroll is negligible.
  * ----------------------------------------------------------------- */
 (function (window, document) {
     'use strict';
 
     var records = [];
     var byElement = [];
+    var ticking = false;
 
     function partOf(rect) {
         var vh = window.innerHeight || document.documentElement.clientHeight;
@@ -28,23 +36,39 @@
         return [x, y];
     }
 
-    function fire(el) {
-        var rec = byElement.indexOf(el);
-        if (rec === -1 || records[rec].fired) return;
-        records[rec].fired = true;
-        var parts = partOf(el.getBoundingClientRect());
-        var cbs = records[rec].callbacks.slice();
+    function fire(rec) {
+        if (rec.fired) return;
+        rec.fired = true;
+        var parts = partOf(rec.el.getBoundingClientRect());
+        var cbs = rec.callbacks.slice();
         for (var i = 0; i < cbs.length; i++) {
             cbs[i](true, parts[0], parts[1]);
         }
+        // Stop watching elements that have already run.
+        var idx = byElement.indexOf(rec.el);
+        if (idx > -1) byElement.splice(idx, 1);
     }
 
-    var hasIO = typeof window.IntersectionObserver === 'function';
-    var io = hasIO ? new window.IntersectionObserver(function (entries) {
-        for (var i = 0; i < entries.length; i++) {
-            if (entries[i].isIntersecting) fire(entries[i].target);
+    function check() {
+        ticking = false;
+        var vh = window.innerHeight || document.documentElement.clientHeight;
+        // Snapshot first: firing mutates byElement underneath the loop.
+        var pending = byElement.slice();
+        for (var i = 0; i < pending.length; i++) {
+            var el = pending[i];
+            var rect = el.getBoundingClientRect();
+            if (rect.top < vh * 0.85 && rect.bottom > 0) {
+                var idx = byElement.indexOf(el);
+                if (idx > -1) fire(records[idx]);
+            }
         }
-    }, { threshold: 0.15 }) : null;
+    }
+
+    function onScroll() {
+        if (ticking) return;
+        ticking = true;
+        (window.requestAnimationFrame || window.setTimeout)(check, 16);
+    }
 
     window.onInView = function (el, cb) {
         if (!el || el.nodeType !== 1) return;
@@ -52,19 +76,17 @@
         var idx = byElement.indexOf(el);
         if (idx === -1) {
             idx = records.length;
-            records.push({ fired: false, callbacks: [] });
+            records.push({ el: el, fired: false, callbacks: [] });
             byElement.push(el);
         }
 
         records[idx].callbacks.push(cb);
+        if (records[idx].fired) return;   // already triggered
 
-        if (records[idx].fired) return;          // already triggered
-        if (io) {
-            io.observe(el);
-        } else {
-            // No IntersectionObserver: fire on the next tick so the
-            // final value is always reached rather than stuck at 0.
-            setTimeout(function () { fire(el); }, 0);
+        if (byElement.length === 1) {
+            window.addEventListener('scroll', onScroll, { passive: true });
+            window.addEventListener('resize', onScroll, { passive: true });
         }
+        check();
     };
 })(window, document);
