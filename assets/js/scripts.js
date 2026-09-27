@@ -133,6 +133,31 @@ jQuery(function ($) {
     });
     
     // -------------------------------------------------------------
+    // Fact counters
+    // jquery.countTo.js was loaded but never initialized, so these were
+    // static text. Animate on scroll-into-view instead.
+    // -------------------------------------------------------------
+    $('.timer').each(function () {
+        var $t = $(this);
+        $t.text($t.attr('data-to'));   // no-JS / unsupported fallback: show the real number
+    });
+
+    $('#facts').bind('inview', function (event, visible) {
+        if (!visible) return;
+        $(this).unbind('inview');
+        $(this).find('.timer').each(function () {
+            var $t = $(this);
+            $t.countTo({
+                from: 0,
+                to: parseInt($t.attr('data-to'), 10) || 0,
+                duration: 2000,
+                refreshInterval: 50
+            });
+        });
+    });
+
+
+    // -------------------------------------------------------------
     // More skill
     // -------------------------------------------------------------
     $('.more-skill').bind('inview', function(event, visible, visiblePartX, visiblePartY) {
