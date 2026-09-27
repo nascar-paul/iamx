@@ -218,24 +218,12 @@ jQuery(function ($) {
 
 
     // -------------------------------------------------------------
-    // Vidio auto play
+    // Video autoplay — removed. Used the Vimeo Froogaloop API via
+    // http://a.vimeocdn.com/js/froogaloop2.min.js, which is blocked
+    // as mixed content on HTTPS. The #nofocusvideo element it targeted
+    // no longer exists, so $f() was called on null and threw.
+    // The modal video still plays via the native YouTube iframe.
     // -------------------------------------------------------------
-    (function () {
-    
-    /* Vimeo API: http://developer.vimeo.com/player/js-api */
-    
-        var iframe = document.getElementById('nofocusvideo');
-        // $f == Froogaloop
-        var player = $f(iframe);
-
-        $('.modal').on('hidden.bs.modal', function () {
-        player.api('pause');
-        })
-
-        $('.modal').on('shown.bs.modal', function () {
-        player.api('play');
-        })
-    }());
 
 
 

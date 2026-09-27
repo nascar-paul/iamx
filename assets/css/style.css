@@ -610,7 +610,8 @@ SOCIAL ICON
 /* === Video Section === */
 
 .video-section {
-    background: url(../images/video-bg.jpg) no-repeat center center;
+    background: url(../images/video-bg.webp) no-repeat center center;
+    background-image: image-set(url(../images/video-bg.webp) type("image/webp") 1x, url(../images/video-bg.jpg) type("image/jpeg") 1x);
     -webkit-background-size: cover;
     background-size: cover;
     position: relative;
@@ -1250,7 +1251,8 @@ Resume Timeline
 
 /* === Facts Section === */
 .facts-section {
-    background: url(../../assets/images/counter-bg.jpg) no-repeat center center;
+    background: url(../../assets/images/counter-bg.webp) no-repeat center center;
+    background-image: image-set(url(../../assets/images/counter-bg.webp) type("image/webp") 1x, url(../../assets/images/counter-bg.jpg) type("image/jpeg") 1x);
     background-attachment: fixed;
     background-size: cover;
     color: #fff;  
@@ -1415,7 +1417,8 @@ Icon for all respective meta
 
 /* === Hire Section === */
 .hire-section {
-    background: url(../../assets/images/hire-bg.jpg) no-repeat top center #68C3A3;
+    background: url(../../assets/images/hire-bg.webp) no-repeat top center #68C3A3;
+    background-image: image-set(url(../../assets/images/hire-bg.webp) type("image/webp") 1x, url(../../assets/images/hire-bg.jpg) type("image/jpeg") 1x);
     background-attachment: fixed;
     background-size: cover;
     color: #fff;  
@@ -1782,7 +1785,8 @@ Icon for all respective meta
 }
 
 .video-introducing{
-    background: url(../images/video-bg.jpg) no-repeat center center;
+    background: url(../images/video-bg.webp) no-repeat center center;
+    background-image: image-set(url(../images/video-bg.webp) type("image/webp") 1x, url(../images/video-bg.jpg) type("image/jpeg") 1x);
     -webkit-background-size: cover;
     background-size: cover;
     min-height: 390px;
