@@ -105,25 +105,27 @@ jQuery(function ($) {
     // markup ships "0" as the starting value, so animating to
     // $this.text() counted 0 -> 0 and the numbers never moved.
     // -------------------------------------------------------------
-    $('.count-wrap').bind('inview', function(event, visible, visiblePartX, visiblePartY) {
-        if (visible) {
-            $(this).find('.timer').each(function () {
-                var $this = $(this);
-                var target = parseInt($this.attr('data-to'), 10) || 0;
-                $this.text(0);
-                $({ Counter: 0 }).animate({ Counter: target }, {
-                    duration: 2000,
-                    easing: 'swing',
-                    step: function () {
-                        $this.text(Math.ceil(this.Counter));
-                    },
-                    complete: function () {
-                        $this.text(target);
-                    }
+    $('.count-wrap').each(function () {
+        var $wrap = $(this);
+        window.onInView(this, function (visible) {
+            if (visible) {
+                $wrap.find('.timer').each(function () {
+                    var $this = $(this);
+                    var target = parseInt($this.attr('data-to'), 10) || 0;
+                    $this.text(0);
+                    $({ Counter: 0 }).animate({ Counter: target }, {
+                        duration: 2000,
+                        easing: 'swing',
+                        step: function () {
+                            $this.text(Math.ceil(this.Counter));
+                        },
+                        complete: function () {
+                            $this.text(target);
+                        }
+                    });
                 });
-            });
-            $(this).unbind('inview');
-        }
+            }
+        });
     });
 
 
@@ -131,37 +133,38 @@ jQuery(function ($) {
     // Progress Bar
     // -------------------------------------------------------------
  
-    $('.skill-progress').bind('inview', function(event, visible, visiblePartX, visiblePartY) {
-        if (visible) {
-            $.each($('div.progress-bar'),function(){
-                $(this).css('width', $(this).attr('aria-valuenow')+'%');
-            });
-            $(this).unbind('inview');
-        }
+    $('.skill-progress').each(function () {
+        window.onInView(this, function (visible) {
+            if (visible) {
+                $.each($('div.progress-bar'),function(){
+                    $(this).css('width', $(this).attr('aria-valuenow')+'%');
+                });
+            }
+        });
     });
     
     // -------------------------------------------------------------
     // More skill
     // -------------------------------------------------------------
-    $('.more-skill').bind('inview', function(event, visible, visiblePartX, visiblePartY) {
-        if (visible) {
-            $('.chart').easyPieChart({
-                //your configuration goes here
-                easing: 'easeOut',
-                delay: 3000,
-                barColor:'#68c3a3',
-                trackColor:'rgba(255,255,255,0.2)',
-                scaleColor: false,
-                lineWidth: 8,
-                size: 140,
-                animate: 2000,
-                onStep: function(from, to, percent) {
-                    this.el.children[0].innerHTML = Math.round(percent);
-                }
-
-            });
-            $(this).unbind('inview');
-        }
+    $('.more-skill').each(function () {
+        window.onInView(this, function (visible) {
+            if (visible) {
+                $('.chart').easyPieChart({
+                    //your configuration goes here
+                    easing: 'easeOut',
+                    delay: 3000,
+                    barColor: '#68c3a3',
+                    trackColor: 'rgba(255,255,255,0.2)',
+                    scaleColor: false,
+                    lineWidth: 8,
+                    size: 140,
+                    animate: 2000,
+                    onStep: function (from, to, percent) {
+                        this.el.children[0].innerHTML = Math.round(percent);
+                    }
+                });
+            }
+        });
     });
 
 

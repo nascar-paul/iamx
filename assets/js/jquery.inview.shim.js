@@ -1,36 +1,24 @@
 /* -----------------------------------------------------------------
- * jQuery inview shim
+ * Scroll-into-view helper
  *
- * jquery.inview.min.js shipped with this template registers its
- * special event through jQuery 1.x internals that jQuery 3 removed,
- * so the 'inview' event never fired and every scroll-triggered
- * animation below (fact counters, skill progress bars, pie charts)
- * stayed dead. This re-implements the same event on top of
- * IntersectionObserver.
+ * jquery.inview.min.js shipped with this template registered a jQuery
+ * 'inview' special event through internals that jQuery 3 removed, so
+ * the event never fired and three scroll-triggered animations stayed
+ * dead: the fact counters, the skill progress bars and the
+ * easyPieChart rings.
  *
- * The event signature is unchanged - callbacks receive
- * (event, visible, visiblePartX, visiblePartY) - so scripts.js
- * needed no changes.
+ * window.onInView(el, cb) replaces it. cb is called with
+ * (visible, partX, partY), matching the old event arguments, and only
+ * the first time the element scrolls into view - which is what every
+ * caller here wants.
  * ----------------------------------------------------------------- */
-(function (window, $) {
+(function (window, document) {
     'use strict';
-    if (!$) return;
 
-    var SPECIAL = 'inview';
-    var observed = [];
-    var fired = [];
+    var records = [];
+    var byElement = [];
 
-    var supported = ('IntersectionObserver' in window);
-    var io = supported ? new window.IntersectionObserver(function (entries) {
-        entries.forEach(function (entry) {
-            if (!entry.isIntersecting || fired.indexOf(entry.target) > -1) return;
-            fired.push(entry.target);
-            var parts = visiblePart(entry.boundingClientRect);
-            $(entry.target).trigger(SPECIAL, [true, parts[0], parts[1]]);
-        });
-    }, { threshold: 0.15 }) : null;
-
-    function visiblePart(rect) {
+    function partOf(rect) {
         var vh = window.innerHeight || document.documentElement.clientHeight;
         var vw = window.innerWidth || document.documentElement.clientWidth;
         var x = (rect.left <= 0 && rect.right >= vw) ? 'both'
@@ -40,33 +28,43 @@
         return [x, y];
     }
 
-    function observe(el) {
-        if (observed.indexOf(el) > -1) return;
-        observed.push(el);
-        if (io) {
-            io.observe(el);
-        } else {
-            // No IntersectionObserver: fire immediately so content is
-            // never left permanently un-animated.
-            var parts = visiblePart(el.getBoundingClientRect());
-            setTimeout(function () { $(el).trigger(SPECIAL, [true, parts[0], parts[1]]); }, 0);
+    function fire(el) {
+        var rec = byElement.indexOf(el);
+        if (rec === -1 || records[rec].fired) return;
+        records[rec].fired = true;
+        var parts = partOf(el.getBoundingClientRect());
+        var cbs = records[rec].callbacks.slice();
+        for (var i = 0; i < cbs.length; i++) {
+            cbs[i](true, parts[0], parts[1]);
         }
     }
 
-    $.event.special = $.event.special || {};
+    var hasIO = typeof window.IntersectionObserver === 'function';
+    var io = hasIO ? new window.IntersectionObserver(function (entries) {
+        for (var i = 0; i < entries.length; i++) {
+            if (entries[i].isIntersecting) fire(entries[i].target);
+        }
+    }, { threshold: 0.15 }) : null;
 
-    $.event.special[SPECIAL] = $.event.special[SPECIAL] || {};
+    window.onInView = function (el, cb) {
+        if (!el || el.nodeType !== 1) return;
 
-    // setup() runs at .bind() time, which is when we learn which
-    // element wants the event. Observing here rather than on document
-    // ready matters: this file loads before scripts.js, so a ready
-    // callback would run before any handler is bound.
-    $.event.special[SPECIAL].setup = function (data, namespaces, eventHandle) {
-        var el = eventHandle ? eventHandle : this;
-        if (el && el.nodeType === 1) observe(el);
+        var idx = byElement.indexOf(el);
+        if (idx === -1) {
+            idx = records.length;
+            records.push({ fired: false, callbacks: [] });
+            byElement.push(el);
+        }
+
+        records[idx].callbacks.push(cb);
+
+        if (records[idx].fired) return;          // already triggered
+        if (io) {
+            io.observe(el);
+        } else {
+            // No IntersectionObserver: fire on the next tick so the
+            // final value is always reached rather than stuck at 0.
+            setTimeout(function () { fire(el); }, 0);
+        }
     };
-
-    $.event.special[SPECIAL].teardown = function () {
-        // jQuery removes its own handlers; nothing to clean up.
-    };
-})(window, window.jQuery);
+})(window, document);
