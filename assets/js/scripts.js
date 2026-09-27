@@ -29,10 +29,11 @@ jQuery(function ($) {
      * Preloader
     /* ---------------------------------------------- */
 
-    $(window).ready(function() {
-        $('#pre-status').fadeOut();
-        $('#tt-preloader').delay(350).fadeOut('slow');
-    });
+    // Was $(window).ready(...), which throws on jQuery 3 - window has no
+    // ready() method - and aborted the whole ready handler, leaving the
+    // countup, progress bar and pie chart blocks below unexecuted.
+    $('#pre-status').fadeOut();
+    $('#tt-preloader').delay(350).fadeOut('slow');
 
 
 
