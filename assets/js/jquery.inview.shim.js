@@ -25,6 +25,7 @@
     var records = [];
     var byElement = [];
     var ticking = false;
+    var poll = null;
 
     function partOf(rect) {
         var vh = window.innerHeight || document.documentElement.clientHeight;
@@ -70,6 +71,21 @@
         (window.requestAnimationFrame || window.setTimeout)(check, 16);
     }
 
+    // Scroll events are not delivered in every environment (headless
+    // browsers, some embedded webviews) even though the scroll position
+    // changes, so keep a slow interval running until everything pending
+    // has fired. It stops itself once there is nothing left to watch.
+    function startPoll() {
+        if (poll) return;
+        poll = window.setInterval(function () {
+            check();
+            if (byElement.length === 0 && poll) {
+                window.clearInterval(poll);
+                poll = null;
+            }
+        }, 300);
+    }
+
     window.onInView = function (el, cb) {
         if (!el || el.nodeType !== 1) return;
 
@@ -86,6 +102,7 @@
         if (byElement.length === 1) {
             window.addEventListener('scroll', onScroll, { passive: true });
             window.addEventListener('resize', onScroll, { passive: true });
+            startPoll();
         }
         check();
     };
