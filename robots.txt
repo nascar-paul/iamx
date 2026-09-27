@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://paultylerjones.com/sitemap.xml
